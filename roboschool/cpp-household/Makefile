@@ -4,7 +4,7 @@ OBJDIRD=.build-debug
 
 ifeq ($(UNAME),Linux)
   PKG  =pkg-config
-  MOC  =moc -qt=5
+  MOC  =moc
   LIBS =-L/usr/lib64 -lm -lGL -L$(HOME)/.boost/lib
   INC  =-I/usr/include
   BOOST_MT=
@@ -57,7 +57,7 @@ LIBS    += $(RPATH) -lLinearMath -lBullet3Common -lBulletCollision -lBulletDynam
 ifeq ($(PYTHON),2.7)
     BOOST_PYTHON = -lboost_python
 else
-    BOOST_PYTHON = -lboost_python$(BOOST_PYTHON3_POSTFIX)
+    BOOST_PYTHON = -lboost_python37
 endif
 
 CC=gcc
