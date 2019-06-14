@@ -287,6 +287,7 @@ struct Robot {
 	void query_position()  { wref->query_body_position(rref); } // necessary for robot that is just created, before any step() done
 	void set_pose(const Pose& p)  { wref->robot_move(rref, p.convert_to_bt_transform(), btVector3(0,0,0)); }
 	void set_pose_and_speed(const Pose& p, float vx, float vy, float vz)  { wref->robot_move(rref, p.convert_to_bt_transform(), btVector3(vx,vy,vz)); }
+	void set_pose_and_angular_speed(const Pose& p, float vx, float vy, float vz)  { wref->robot_rot(rref, p.convert_to_bt_transform(), btVector3(vx,vy,vz)); }
 	//void replace_texture(const std::string& material_name, const std::string& new_jpeg_png)  { rref->replace_texture(material_name, new_jpeg_png); }
 };
 
@@ -623,7 +624,7 @@ void cpp_household_init()
 	class_<Thingy>("Thingy", no_init)
 	.def("pose", &Thingy::pose)
 	.def("speed", &Thingy::speed)
-	//.def("angular_speed", &Thingy::angular_speed)
+	.def("angular_speed", &Thingy::angular_speed)
 	//.def("push", &Thingy::push)
 	//.def("turn", &Thingy::turn)
 	.add_property("name", &Thingy::get_name, &Thingy::set_name)
@@ -671,6 +672,7 @@ void cpp_household_init()
 	.add_property("root_part", &Robot::root_part)
 	.def("set_pose", &Robot::set_pose)
 	.def("set_pose_and_speed", &Robot::set_pose_and_speed)
+	.def("set_pose_and_angular_speed", &Robot::set_pose_and_angular_speed)
 	.def("query_position", &Robot::query_position)
 	//.def("replace_texture", &Robot::replace_texture)
 	;

@@ -6,8 +6,23 @@ import gym, gym.spaces, gym.utils, gym.utils.seeding
 import numpy as np
 import os, sys
 
+class robot_state:
+    def __init__(self, n_joints):
+        self.joint_angles = np.zeros((n_joints,1))
+        self.joint_angles_rate = np.zeros((n_joints,1))
+        self.root_pos = np.zeros((3, 1))
+        self.root_linear_vel = np.zeros((3, 1))
+        self.root_quaternion = np.zeros((4, 1))
+        self.root_angular_vel = np.zeros((3, 1))
+
 class RoboschoolForwardWalker(SharedMemoryClientEnv):
     def __init__(self, power):
+
+        self.max_stored_states_num = 1000
+
+        self.current_state_id = -1
+        self.robot_states = []
+
         self.power = power
         self.camera_x = 0
         self.walk_target_x = 1e3  # kilometer away
@@ -17,6 +32,42 @@ class RoboschoolForwardWalker(SharedMemoryClientEnv):
         self.camera_y = 4.3
         self.camera_z = 45.0
         self.camera_follow = 0
+
+    def save(self):
+        # print("goes to save here")
+        s = robot_state(len(self.ordered_joints))
+
+        p = self.robot_body.pose()
+        s.root_pos = np.array(p.xyz())
+        s.root_quaternion = np.array(p.quatertion())
+
+        s.root_linear_vel = np.array(self.robot_body.speed())
+        s.root_angular_vel = np.array(self.robot_body.angular_speed())
+
+        for n, j in enumerate(self.ordered_joints):
+            s.joint_angles[n] = j.current_position()[0]
+            s.joint_angles_rate[n] = j.current_position()[1]
+
+        self.robot_states.append(s)
+        self.current_state_id = len(self.robot_states) - 1
+        return
+
+    def load(self, s_id):
+        self.current_state_id = s_id
+
+        s = self.robot_states[self.current_state_id]
+
+        # LOADING: saving these values then reseting to the stored values
+        p = self.robot_body.pose()
+        p.set_xyz(s.root_pos[0], s.root_pos[1], s.root_pos[2])
+        p.set_quaternion(s.root_quaternion[0], s.root_quaternion[1], s.root_quaternion[2], s.root_quaternion[3])
+
+        self.cpp_robot.set_pose_and_speed(p, s.root_linear_vel[0], s.root_linear_vel[1], s.root_linear_vel[2])
+        self.cpp_robot.set_pose_and_angular_speed(p, s.root_angular_vel[0], s.root_angular_vel[1], s.root_angular_vel[2])
+        for n, j in enumerate(self.ordered_joints):
+            j.reset_current_position(s.joint_angles[n][0], s.joint_angles_rate[n][0])
+
+        return
 
     def create_single_player_scene(self):
         return SinglePlayerStadiumScene(gravity=9.8, timestep=0.0165/4, frame_skip=4)

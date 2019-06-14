@@ -448,6 +448,7 @@ void World::query_body_position(const shared_ptr<Robot>& robot)
 	const double* root_inertial_frame;
 	const double* q;
 	const double* q_dot;
+
 	b3GetStatusActualState(
 		status_handle, 0 /* body_unique_id */,
 		0 /* num_degree_of_freedom_q */, 0 /* num_degree_of_freedom_u */,
@@ -590,6 +591,21 @@ void World::robot_move(const shared_ptr<Robot>& robot, const btTransform& tr, co
 	tmp[1] = speed[1];
 	tmp[2] = speed[2];
 	b3CreatePoseCommandSetBaseLinearVelocity(cmd, tmp);
+	b3SubmitClientCommandAndWaitStatus(client, cmd);
+
+	b3CreatePoseCommandSetBaseLinearVelocity(cmd, tmp);
+}
+
+void World::robot_rot(const shared_ptr<Robot>& robot, const btTransform& tr, const btVector3& anglur_speed)
+{
+	b3SharedMemoryCommandHandle cmd = b3CreatePoseCommandInit(client, robot->bullet_handle);
+	b3CreatePoseCommandSetBasePosition(cmd, tr.getOrigin()[0], tr.getOrigin()[1], tr.getOrigin()[2]);
+	b3CreatePoseCommandSetBaseOrientation(cmd, tr.getRotation()[0], tr.getRotation()[1], tr.getRotation()[2], tr.getRotation()[3]);
+	double tmp[3];
+	tmp[0] = anglur_speed[0];
+	tmp[1] = anglur_speed[1];
+	tmp[2] = anglur_speed[2];
+	b3CreatePoseCommandSetBaseAngularVelocity(cmd, tmp);
 	b3SubmitClientCommandAndWaitStatus(client, cmd);
 }
 
